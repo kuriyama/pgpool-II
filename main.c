@@ -712,6 +712,7 @@ static void daemonize(void)
 */
 static void stop_me(void)
 {
+	int cnt = 20;
 	pid_t pid;
 
 	pid = read_pid_file();
@@ -731,12 +732,12 @@ static void stop_me(void)
 
 	fprintf(stderr, "stop request sent to pgpool (pid=%d). waiting for termination...", pid);
 
-	while (kill(pid, 0) == 0)
+	while (kill(pid, 0) == 0 && cnt-- > 0)
 	{
 		fprintf(stderr, ".");
 		sleep(1);
 	}
-	fprintf(stderr, "done.\n");
+	fprintf(stderr, "done (cnt=%d).\n", cnt);
 }
 
 /*
@@ -1159,6 +1160,8 @@ void send_failback_request(int node_id)
 static RETSIGTYPE exit_handler(int sig)
 {
 	int i;
+	int status;
+	pid_t pid;
 
 	POOL_SETMASK(&AuthBlockSig);
 
@@ -1191,7 +1194,7 @@ static RETSIGTYPE exit_handler(int sig)
 
 	for (i = 0; i < pool_config->num_init_children; i++)
 	{
-		pid_t pid = pids[i].pid;
+		pid = pids[i].pid;
 		if (pid)
 		{
 			pool_log("send signal(%d) to pid=%d (pgrp=%d), i=%d", sig, pid, getpgid(pid), i);
@@ -1204,8 +1207,13 @@ static RETSIGTYPE exit_handler(int sig)
 
 	POOL_SETMASK(&UnBlockSig);
 
-	while (wait(NULL) > 0)
-		;
+	i = 0;
+	while (pid = wait(&status) > 0) {
+		pool_log("got wait(): i=%d, pid=%d, status=0x%04x", i++, pid, status);
+		if (!WIFEXITED(status)) {
+			pool_error("wait(): pid=%d, status=0x%04x", pid, status);
+		}
+	}
 
 	if (errno != ECHILD)
 		pool_error("wait() failed. reason:%s", strerror(errno));
