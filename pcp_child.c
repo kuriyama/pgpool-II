@@ -189,7 +189,13 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 		/* process a request */
 		pool_debug("pcp_child: received PCP packet type of service '%c'", tos);
 
+if (1) {
+char buf[256];
+sprintf(buf, "PCP: processing a request '%c'", tos);
+set_ps_display(buf, false);
+} else {
 		set_ps_display("PCP: processing a request", false);
+}
 
 		switch (tos)
 		{
