@@ -456,6 +456,7 @@ int main(int argc, char **argv)
 	{
 		pids[i].pid = fork_a_child(unix_fd, inet_fd, i);
 		pids[i].start_time = time(NULL);
+		pool_log("fork: pid=%d", pids[i].pid);
 	}
 
 	/* set up signal handlers */
@@ -485,6 +486,7 @@ int main(int argc, char **argv)
     /* maybe change "*" to pool_config->pcp_listen_addresses */
 	pcp_inet_fd = create_inet_domain_socket("*", pool_config->pcp_port);
 	pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
+	pool_log("pcp_fork: pid=%d", pcp_pid);
 
 	retrycnt = 0;		/* reset health check retry counter */
 	sys_retrycnt = 0;	/* reset SystemDB health check retry counter */
@@ -727,7 +729,7 @@ static void stop_me(void)
 		exit(1);
 	}
 
-	fprintf(stderr, "stop request sent to pgpool. waiting for termination...");
+	fprintf(stderr, "stop request sent to pgpool (pid=%d). waiting for termination...", pid);
 
 	while (kill(pid, 0) == 0)
 	{
@@ -1192,11 +1194,13 @@ static RETSIGTYPE exit_handler(int sig)
 		pid_t pid = pids[i].pid;
 		if (pid)
 		{
+			pool_log("send signal(%d) to pid=%d (pgrp=%d), i=%d", sig, pid, getpgid(pid), i);
 			kill(pid, sig);
 		}
 	}
 
 	kill(pcp_pid, sig);
+	pool_log("send signal(%d) to pcp_pid=%d", sig, pcp_pid);
 
 	POOL_SETMASK(&UnBlockSig);
 
