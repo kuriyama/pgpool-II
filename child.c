@@ -195,6 +195,8 @@ void do_child(int unix_fd, int inet_fd)
 				 */
 				child_exit(2);
 			}
+			timeout.tv_sec = pool_config->child_life_time;
+			timeout.tv_usec = 0;
 			pool_debug("fronttend is 0, but continue: connected=%d, child_life=%d, sec=%d, usec=%d", connected, pool_config->child_life_time, timeout.tv_sec,  timeout.tv_usec);
 			continue;
 		}
