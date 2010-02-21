@@ -90,6 +90,7 @@ static pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file);
 static pid_t fork_a_child(int unix_fd, int inet_fd, int id);
 static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp);
 static int create_inet_domain_socket(const char *hostname, const int port);
+static void myunlink(const char* path);
 static void myexit(int code);
 static void failover(void);
 static void reaper(void);
@@ -1020,6 +1021,12 @@ static int create_inet_domain_socket(const char *hostname, const int port)
 	return fd;
 }
 
+static int myexists(const char* path)
+{
+	struct stat sb;
+	return stat(path, &sb) == 0 ? 1 : 0;
+}
+
 /*
 * create UNIX domain socket
 */
@@ -1040,6 +1047,9 @@ static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 	((struct sockaddr *)&addr)->sa_family = AF_UNIX;
 	snprintf(addr.sun_path, sizeof(addr.sun_path), un_addr_tmp.sun_path);
 	len = sizeof(struct sockaddr_un);
+	if (myexists(addr.sun_path)) {
+		myunlink(addr.sun_path);
+	}
 	status = bind(fd, (struct sockaddr *)&addr, len);
 	if (status == -1)
 	{
