@@ -63,6 +63,7 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 			 remote_data_directory);
 	elog(DEBUG1, "recovery_script: %s", recovery_script);
 	r = system(recovery_script);
+	elog(DEBUG1, "recovery_script: returns 0x%04x", r);
 
 	if (r != 0)
 	{
@@ -92,6 +93,7 @@ pgpool_remote_start(PG_FUNCTION_ARGS)
 			 remote_host, remote_data_directory);
 	elog(DEBUG1, "recovery_script: %s", recovery_script);
 	r = system(recovery_script);
+	elog(DEBUG1, "recovery_script: returns 0x%04x", r);
 
 	if (r != 0)
 	{
