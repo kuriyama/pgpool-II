@@ -179,6 +179,7 @@ void do_child(int unix_fd, int inet_fd)
 		accepted = 0;
 
 		/* perform accept() */
+		pool_debug("do_accept(%d)", timeout.tv_sec);
 		frontend = do_accept(unix_fd, inet_fd, &timeout);
 
 		if (frontend == NULL)	/* connection request from frontend timed out */
@@ -194,6 +195,7 @@ void do_child(int unix_fd, int inet_fd)
 				 */
 				child_exit(2);
 			}
+			pool_debug("fronttend is 0, but continue: connected=%d, child_life=%d, sec=%d, usec=%d", connected, pool_config->child_life_time, timeout.tv_sec,  timeout.tv_usec);
 			continue;
 		}
 
@@ -1838,8 +1840,10 @@ void check_stop_request(void)
 	 * If smart shutdown was requested but we are not in idle state,
 	 * do not exit
 	 */
-	if (exit_request == SIGTERM && idle == 0)
+	if (exit_request == SIGTERM && idle == 0) {
+		pool_debug("check_stop_request: SIGTERM requested, but not idle");
 		return;
+	}
 
 	if (exit_request)
 	{
